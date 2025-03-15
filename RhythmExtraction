@@ -1,0 +1,84 @@
+#rhythm extraction with Google Colab - here's to my non computer havers out there
+from google.colab import drive
+import music21
+import csv
+import pandas as pd
+drive.mount('/content/drive')
+
+K279 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Piano_Sonata_n01_K279.mxl')
+"""
+K545 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K545_1.mxl')
+
+K457 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K457_1.mxl') #works
+
+K189 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K189_1.mxl') #works badly
+
+K331 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K331_1.mxl') #works
+"""
+K457 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K457_1.mxl') #works
+
+def getMelody(part):
+  """finds the melody or first voice of a part, and flattens it into the melody list"""
+  melody = []
+  for bar in part.getElementsByClass('Measure'):
+    voices = bar.getElementsByClass('Voice')
+    if voices:
+      melody.extend(voices[0].notesAndRests)
+    else:
+      melody.extend(bar.notesAndRests)
+  return melody
+  
+def separatePhrases(melody):
+  """separates the melody into phrases, and converts the phrases into a matrix of durations"""
+  phraseMatrix = []
+  phrase = []
+  for i in melody:
+    if isinstance(i, music21.note.Note):
+      if i.quarterLength>0:
+        phrase.append(i.quarterLength)
+      else:
+        continue
+    elif isinstance(i, music21.chord.Chord):
+      if i.quarterLength>0:
+        phrase.append(i.quarterLength)
+      else:
+        continue
+    elif isinstance(i, music21.note.Rest):
+      if len(phrase) > 0 and phrase not in phraseMatrix:
+        phraseMatrix.append(phrase)
+        phrase = []
+      else:
+        continue
+  if phrase:
+    phraseMatrix.append(phrase)
+  return phraseMatrix
+
+def padPhrases(phraseMatrix):
+    """Pads phrases with None to ensure equal length."""
+    maxLen = max(len(row) for row in phraseMatrix)
+    paddedMatrix = [row + [None] * (maxLen - len(row)) for row in phraseMatrix]
+    return paddedMatrix
+
+def depadPhrases(paddedMatrix):
+    """Removes padding (None values) from phrases."""
+    depaddedMatrix = [[elem for elem in row if elem is not None] for row in paddedMatrix]
+    return depaddedMatrix
+
+def inspectPhrases(phraseMatrix):
+  """a short function for inspecting the output before writing to a csv"""
+  print(len(phraseMatrix))
+  for i in phraseMatrix:
+    print(i)
+
+x = K457.parts[0]
+y = getMelody(x)
+phrases = separatePhrases(y)
+paddedPhrases = padPhrases(phrases)
+csv_path = "/content/drive/My Drive/MusicXML/K457.csv"
+
+with open(csv_path, mode='w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerows(paddedPhrases)
+
+df = pd.read_csv(csv_path, header=None)
+print(df.head())
