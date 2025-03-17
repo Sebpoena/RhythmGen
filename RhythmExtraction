@@ -5,17 +5,42 @@ import csv
 import pandas as pd
 drive.mount('/content/drive')
 
-K279 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Piano_Sonata_n01_K279.mxl')
 """
-K545 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K545_1.mxl')
+K279 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Piano_Sonata_n01_K279.mxl') #does not work
+K279 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K279_2.mxl') #works - done
 
-K457 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K457_1.mxl') #works
+K545 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K545_1.mxl') #does not work
+K545 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K545_2.mxl') #works - done
 
-K189 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K189_1.mxl') #works badly
+K457 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K457_1.mxl') #works - done
 
-K331 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K331_1.mxl') #works
+K189 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K189_1.mxl') #works badly - done
+
+K331 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K331_1.mxl') #works - done
+
+K570 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K570_1.mxl') #works - done
+
+K576 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K576_1.mxl') #works - done
+
+K310 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K310_1.mxl') #works badly, part[1] not [0] - done
+
+Op10No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op10No1_1.mxl') #works - done
+
+Op49No2 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op49No2_1.mxl') #works, 1st mvmt only - done
+
+Op13 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op13_1.mxl') #works - done
+
+Op2No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op2No1_1.mxl') #works, 1st mvmt only - done
+
+Op2No3 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op2No3_1.mxl') #works - done
+
+Op81a = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op81a_1.mxl') #works, 1st mvmt only - done
+
+Op78 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op78_1.mxl') #works - done
+
+Op31No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op31No1_1.mxl') #works, 1st mvmt only - done
+
 """
-K457 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K457_1.mxl') #works
 
 def getMelody(part):
   """finds the melody or first voice of a part, and flattens it into the melody list"""
@@ -63,6 +88,20 @@ def depadPhrases(paddedMatrix):
     """Removes padding (None values) from phrases."""
     depaddedMatrix = [[elem for elem in row if elem is not None] for row in paddedMatrix]
     return depaddedMatrix
+
+def splitLongPhrases(phrases, maxLength=64, overlap=32):
+  """Turns longer phrases into shorter overlapping chunks"""
+  new_phrases = []  
+  for phrase in phrases:
+    if len(phrase) > max_length:
+      for start in range(0, len(phrase), overlap):
+        chunk = phrase[start:start + max_length]
+        if len(chunk) < max_length:  # Avoid tiny last chunks
+          break
+        new_phrases.append(chunk)
+    else:
+      new_phrases.append(phrase)  # Keep short phrases unchanged
+  return new_phrases
 
 def inspectPhrases(phraseMatrix):
   """a short function for inspecting the output before writing to a csv"""
