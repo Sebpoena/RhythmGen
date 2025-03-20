@@ -1,12 +1,26 @@
+!pip install hmmlearn
 from google.colab import drive
 import csv
+import numpy as np
+from hmmlearn import hmm
 
 drive.mount('/content/drive')
 
 def csvToList(filename):
   with open(filename, newline='', encoding='utf-8') as f:
     reader = csv.reader(f)
-    data = [[x for x in row if x != "None"] for row in reader]
+    data = []
+    for row in reader:
+      new_row = []
+      for x in row:
+        x = x.strip()
+        if x and x != "None":
+          try:
+            new_row.append(float(x))
+          except ValueError:
+            print(f"Skipping value: {x}")
+      if new_row:
+        data.append(new_row)
   return data
 
 class Compiler:
@@ -65,6 +79,25 @@ Op2No3 = csvToList('/content/drive/MyDrive/MusicXML/Op2No3.csv')
 Op81a = csvToList('/content/drive/MyDrive/MusicXML/Op81a.csv')
 Op78 = csvToList('/content/drive/MyDrive/MusicXML/Op78.csv')
 Op31No1 = csvToList('/content/drive/MyDrive/MusicXML/Op31No1.csv')
+D959 = csvToList("/content/drive/My Drive/MusicXML/D959.csv")
+D960 = csvToList("/content/drive/My Drive/MusicXML/D960.csv")
 
-pieces = [K189, K457, K331, K545, K279, K570, K576, K310, Op10No1, Op49No2, Op13, Op2No1, Op2No3, Op81a, Op78, Op31No1]
-MozBeeth942 = Compiler(pieces)
+
+pieces = [K189, K457, K331, K545, K279, K570, K576, K310, Op10No1, Op49No2, Op13, Op2No1, Op2No3, Op81a, Op78, Op31No1, D959, D960]
+MozBeethSchub = Compiler(pieces)
+
+formattedData = [np.array(phrase).reshape(-1, 1) for phrase in MozBeethSchub.processedPhrases]
+
+n_states = 8 #reminder - play around with setting if not working
+model = hmm.GaussianHMM(n_components=n_states, covariance_type="full", n_iter=100)
+model.fit(np.vstack(formattedData))
+
+def generate(model, length=16):
+
+    generated, _ = model.sample(length)
+    rhythm = generated.flatten().tolist()
+
+    print(["{:.4f}".format(val) for val in rhythm])
+    return rhythm
+
+rhythmGen = generate(model, length=25)
