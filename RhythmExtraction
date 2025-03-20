@@ -1,43 +1,25 @@
-#rhythm extraction with Google Colab - here's to my non computer havers out there
 from google.colab import drive
 import music21
 import csv
 import pandas as pd
 drive.mount('/content/drive')
-
 """
-K279 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Piano_Sonata_n01_K279.mxl') #does not work
 K279 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K279_2.mxl') #works - done
-
-K545 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K545_1.mxl') #does not work
 K545 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K545_2.mxl') #works - done
-
 K457 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K457_1.mxl') #works - done
-
 K189 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K189_1.mxl') #works badly - done
-
 K331 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K331_1.mxl') #works - done
-
 K570 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K570_1.mxl') #works - done
-
 K576 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K576_1.mxl') #works - done
-
 K310 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K310_1.mxl') #works badly, part[1] not [0] - done
 
 Op10No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op10No1_1.mxl') #works - done
-
 Op49No2 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op49No2_1.mxl') #works, 1st mvmt only - done
-
 Op13 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op13_1.mxl') #works - done
-
 Op2No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op2No1_1.mxl') #works, 1st mvmt only - done
-
 Op2No3 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op2No3_1.mxl') #works - done
-
 Op81a = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op81a_1.mxl') #works, 1st mvmt only - done
-
 Op78 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op78_1.mxl') #works - done
-
 Op31No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op31No1_1.mxl') #works, 1st mvmt only - done
 """
 
@@ -51,7 +33,7 @@ def getMelody(part):
     else:
       melody.extend(bar.notesAndRests)
   return melody
-  
+
 def separatePhrases(melody):
   """separates the melody into phrases, and converts the phrases into a matrix of durations"""
   phraseMatrix = []
@@ -59,12 +41,12 @@ def separatePhrases(melody):
   for i in melody:
     if isinstance(i, music21.note.Note):
       if i.quarterLength>0:
-        phrase.append(i.quarterLength)
+        phrase.append(round(float(i.quarterLength), 4))
       else:
         continue
     elif isinstance(i, music21.chord.Chord):
       if i.quarterLength>0:
-        phrase.append(i.quarterLength)
+        phrase.append(round(float(i.quarterLength), 4))
       else:
         continue
     elif isinstance(i, music21.note.Rest):
@@ -78,26 +60,85 @@ def separatePhrases(melody):
   return phraseMatrix
 
 def padPhrases(phraseMatrix):
-    """Pads phrases with None to ensure equal length."""
-    maxLen = max(len(row) for row in phraseMatrix)
-    paddedMatrix = [row + [None] * (maxLen - len(row)) for row in phraseMatrix]
-    return paddedMatrix
+  """Pads phrases with None to ensure equal length."""
+  maxLen = max(len(row) for row in phraseMatrix)
+  paddedMatrix = [row + [None] * (maxLen - len(row)) for row in phraseMatrix]
+  return paddedMatrix
+
+def writeToFiles(csv_path, phraseMatrix):
+  """the saver of matrices, hope of all floats"""
+  with open(csv_path, mode='w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerows(phraseMatrix)
+
+def phraseOrganisation(melody, location):
+  """provides and saves matrix to file"""
+  melody = getMelody(melody)
+  phraseMatrix = separatePhrases(melody)
+  paddedPhrases = padPhrases(phraseMatrix)
+  writeToFiles(location, paddedPhrases)
+  return paddedPhrases
 
 def inspectPhrases(phraseMatrix):
   """a short function for inspecting the output before writing to a csv"""
-  print(len(phraseMatrix))
   for i in phraseMatrix:
     print(i)
 
-x = K457.parts[0]
-y = getMelody(x)
-phrases = separatePhrases(y)
-paddedPhrases = padPhrases(phrases)
-csv_path = "/content/drive/My Drive/MusicXML/K457.csv"
+def inspectPhrasesLength(phraseMatrix):
+  """a short tool to check the amount of phrases in a phrase matrix"""
+  print(len(phraseMatrix))
 
-with open(csv_path, mode='w', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerows(paddedPhrases)
+def checkCSV(location):
+  df = pd.read_csv(location, header=None)
+  print(df.head())
 
-df = pd.read_csv(csv_path, header=None)
-print(df.head())
+K279 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K279_2.mxl') 
+K545 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K545_2.mxl') 
+K457 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K457_1.mxl') 
+K189 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K189_1.mxl') 
+K331 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K331_1.mxl') 
+K570 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K570_1.mxl') 
+K576 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K576_1.mxl') 
+K310 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K310_1.mxl')
+Op10No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op10No1_1.mxl') 
+Op49No2 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op49No2_1.mxl') 
+Op13 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op13_1.mxl') 
+Op2No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op2No1_1.mxl') 
+Op2No3 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op2No3_1.mxl') 
+Op81a = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op81a_1.mxl') 
+Op78 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op78_1.mxl') 
+Op31No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op31No1_1.mxl') 
+melodiesMB = [K189.parts[0], K457.parts[0], K331.parts[0], K545.parts[0], K279.parts[0], K570.parts[0], K576.parts[0], K310.parts[1], Op10No1.parts[0], Op49No2.parts[0], Op13.parts[0], Op2No1.parts[0], Op2No3.parts[0], Op81a.parts[0], Op78.parts[0], Op31No1.parts[0]]
+#MB stands for Mozart-Beethoven, as I will now be adding other composers to the data
+
+K189Path = "/content/drive/My Drive/MusicXML/K189.csv"
+K457Path = "/content/drive/My Drive/MusicXML/K457.csv"
+K331Path = "/content/drive/My Drive/MusicXML/K331.csv"
+K545Path = "/content/drive/My Drive/MusicXML/K545.csv"
+K279Path = "/content/drive/My Drive/MusicXML/K279.csv"
+K570Path = "/content/drive/My Drive/MusicXML/K570.csv"
+K576Path = "/content/drive/My Drive/MusicXML/K576.csv"
+K310Path = "/content/drive/My Drive/MusicXML/K310.csv"
+Op10No1Path = "/content/drive/My Drive/MusicXML/Op10No1.csv"
+Op49No2Path = "/content/drive/My Drive/MusicXML/Op49No2.csv"
+Op13Path = "/content/drive/My Drive/MusicXML/Op13.csv"
+Op2No1Path = "/content/drive/My Drive/MusicXML/Op2No1.csv"
+Op2No3Path = "/content/drive/My Drive/MusicXML/Op2No3.csv"
+Op81aPath = "/content/drive/My Drive/MusicXML/Op81a.csv"
+Op78Path = "/content/drive/My Drive/MusicXML/Op78.csv"
+Op31No1Path = "/content/drive/My Drive/MusicXML/Op31No1.csv"
+pathsMB = [K189Path, K457Path, K331Path, K545Path, K279Path, K570Path, K576Path, K310Path, Op10No1Path, Op49No2Path, Op13Path, Op2No1Path, Op2No3Path, Op81aPath, Op78Path, Op31No1Path]
+#MB stands for Mozart-Beethoven, as I will now be adding other composers to the data
+
+D959 = music21.converter.parse("/content/drive/My Drive/MusicXML/D959_1.mxl")
+D960 = music21.converter.parse("/content/drive/My Drive/MusicXML/D960_1.mxl")
+melodiesSchubert = [D959.parts[0], D960.parts[0]]
+
+D959Path = "/content/drive/My Drive/MusicXML/D959.csv"
+D960Path = "/content/drive/My Drive/MusicXML/D960.csv"
+pathsSchubert = [D959Path, D960Path]
+
+for melody, location in zip(melodiesSchubert, pathsSchubert):
+  phraseMatrix = phraseOrganisation(melody, location)
+  inspectPhrasesLength(phraseMatrix)
+  checkCSV(location)
