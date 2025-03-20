@@ -1,0 +1,70 @@
+from google.colab import drive
+import csv
+
+drive.mount('/content/drive')
+
+def csvToList(filename):
+  with open(filename, newline='', encoding='utf-8') as f:
+    reader = csv.reader(f)
+    data = [[x for x in row if x != "None"] for row in reader]
+  return data
+
+class Compiler:
+  def __init__(self, rawPhrases):
+    self.rawPhrases = rawPhrases
+    x = sum([len(i) for i in self.rawPhrases])
+    print(x)
+    self.preProcessedPhrases = []
+    for i in self.rawPhrases:
+      self.splitLongPhrases(i)
+    print(f"the length of the preprocessed phrases is {len(self.preProcessedPhrases)}")
+    self.processedPhrases = [i for i in self.preProcessedPhrases if not self.sortRepetitivePhrases(i)]
+    print(f"the length of the processed phrases is {len(self.processedPhrases)}")
+
+  def splitLongPhrases(self, phrases, maxLength=64, overlap=32):
+    """this will separate longer phrases into shorter overlapping chunks"""
+    print(f"the length of the phrases before separation is {len(phrases)}")
+    count = 0
+    for phrase in phrases:
+      if len(phrase) > maxLength:
+        for i in range(0, len(phrase), overlap):
+          chunk = phrase[i:i + maxLength]
+          if len(chunk) < maxLength:
+            break
+          self.preProcessedPhrases.append(chunk)
+          count += 1
+      else:
+        self.preProcessedPhrases.append(phrase)
+        count += 1
+    print(f"the length of the phrases after separation is {count}")
+
+  def sortRepetitivePhrases(self, phrase, threshold=0.9):
+    """this will return True if a phrase is largely comprised of one duration"""
+    if len(phrase) <= 2:
+      return False  
+    durationCount = {}
+    for duration in phrase:
+      durationCount[duration] = durationCount.get(duration, 0) + 1
+    percentage = max(durationCount.values())/len(phrase)
+    return percentage > threshold
+
+
+K189 = csvToList('/content/drive/MyDrive/MusicXML/K189.csv')
+K457 = csvToList('/content/drive/MyDrive/MusicXML/K457.csv')
+K331 = csvToList('/content/drive/MyDrive/MusicXML/K331.csv')
+K545 = csvToList('/content/drive/MyDrive/MusicXML/K545.csv')
+K279 = csvToList('/content/drive/MyDrive/MusicXML/K279.csv')
+K570 = csvToList('/content/drive/MyDrive/MusicXML/K570.csv')
+K576 = csvToList('/content/drive/MyDrive/MusicXML/K576.csv')
+K310 = csvToList('/content/drive/MyDrive/MusicXML/K310.csv')
+Op10No1 = csvToList('/content/drive/MyDrive/MusicXML/Op10No1.csv')
+Op49No2 = csvToList('/content/drive/MyDrive/MusicXML/Op49No2.csv')
+Op13 = csvToList('/content/drive/MyDrive/MusicXML/Op13.csv')
+Op2No1 = csvToList('/content/drive/MyDrive/MusicXML/Op2No1.csv')
+Op2No3 = csvToList('/content/drive/MyDrive/MusicXML/Op2No3.csv')
+Op81a = csvToList('/content/drive/MyDrive/MusicXML/Op81a.csv')
+Op78 = csvToList('/content/drive/MyDrive/MusicXML/Op78.csv')
+Op31No1 = csvToList('/content/drive/MyDrive/MusicXML/Op31No1.csv')
+
+pieces = [K189, K457, K331, K545, K279, K570, K576, K310, Op10No1, Op49No2, Op13, Op2No1, Op2No3, Op81a, Op78, Op31No1]
+MozBeeth942 = Compiler(pieces)
