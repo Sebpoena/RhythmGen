@@ -39,7 +39,6 @@ Op81a = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op81a_1.mxl') #
 Op78 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op78_1.mxl') #works - done
 
 Op31No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op31No1_1.mxl') #works, 1st mvmt only - done
-
 """
 
 def getMelody(part):
@@ -83,25 +82,6 @@ def padPhrases(phraseMatrix):
     maxLen = max(len(row) for row in phraseMatrix)
     paddedMatrix = [row + [None] * (maxLen - len(row)) for row in phraseMatrix]
     return paddedMatrix
-
-def depadPhrases(paddedMatrix):
-    """Removes padding (None values) from phrases."""
-    depaddedMatrix = [[elem for elem in row if elem is not None] for row in paddedMatrix]
-    return depaddedMatrix
-
-def splitLongPhrases(phrases, maxLength=64, overlap=32):
-  """Turns longer phrases into shorter overlapping chunks"""
-  new_phrases = []  
-  for phrase in phrases:
-    if len(phrase) > max_length:
-      for start in range(0, len(phrase), overlap):
-        chunk = phrase[start:start + max_length]
-        if len(chunk) < max_length:  # Avoid tiny last chunks
-          break
-        new_phrases.append(chunk)
-    else:
-      new_phrases.append(phrase)  # Keep short phrases unchanged
-  return new_phrases
 
 def inspectPhrases(phraseMatrix):
   """a short function for inspecting the output before writing to a csv"""
