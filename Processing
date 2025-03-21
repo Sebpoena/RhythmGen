@@ -35,7 +35,7 @@ class Compiler:
     self.processedPhrases = [i for i in self.preProcessedPhrases if not self.sortRepetitivePhrases(i)]
     print(f"the length of the processed phrases is {len(self.processedPhrases)}")
 
-  def splitLongPhrases(self, phrases, maxLength=64, overlap=32):
+  def splitLongPhrases(self, phrases, maxLength=36, overlap=24):
     """this will separate longer phrases into shorter overlapping chunks"""
     print(f"the length of the phrases before separation is {len(phrases)}")
     count = 0
@@ -52,10 +52,10 @@ class Compiler:
         count += 1
     print(f"the length of the phrases after separation is {count}")
 
-  def sortRepetitivePhrases(self, phrase, threshold=0.9):
+  def sortRepetitivePhrases(self, phrase, threshold=0.92):
     """this will return True if a phrase is largely comprised of one duration"""
-    if len(phrase) <= 2:
-      return False  
+    if len(phrase) <= 5:
+      return False
     durationCount = {}
     for duration in phrase:
       durationCount[duration] = durationCount.get(duration, 0) + 1
@@ -79,20 +79,43 @@ Op2No3 = csvToList('/content/drive/MyDrive/MusicXML/Op2No3.csv')
 Op81a = csvToList('/content/drive/MyDrive/MusicXML/Op81a.csv')
 Op78 = csvToList('/content/drive/MyDrive/MusicXML/Op78.csv')
 Op31No1 = csvToList('/content/drive/MyDrive/MusicXML/Op31No1.csv')
+D748 = csvToList("/content/drive/My Drive/MusicXML/D748.csv")
 D959 = csvToList("/content/drive/My Drive/MusicXML/D959.csv")
 D960 = csvToList("/content/drive/My Drive/MusicXML/D960.csv")
+BraOp1 = csvToList("/content/drive/My Drive/MusicXML/BraOp1.csv")
+COp36 = csvToList("/content/drive/My Drive/MusicXML/COp36.csv")
+COp40No1 = csvToList("/content/drive/My Drive/MusicXML/COp40No1.csv")
+FCOp35 = csvToList("/content/drive/My Drive/MusicXML/FCOp35.csv")
+HobXVI23 = csvToList("/content/drive/My Drive/MusicXML/HobXVI23.csv")
+HobXVI27 = csvToList("/content/drive/My Drive/MusicXML/HobXVI27.csv")
+HobXVI34 = csvToList("/content/drive/My Drive/MusicXML/HobXVI34.csv")
+HobXVI52 = csvToList("/content/drive/My Drive/MusicXML/HobXVI52.csv")
+QK387 = csvToList("/content/drive/My Drive/MusicXML/QK387.csv")
+QK421 = csvToList("/content/drive/My Drive/MusicXML/QK421.csv")
+QK428 = csvToList("/content/drive/My Drive/MusicXML/QK428.csv")
+QK458 = csvToList("/content/drive/My Drive/MusicXML/QK458.csv")
+QK464 = csvToList("/content/drive/My Drive/MusicXML/QK464.csv")
+QK465 = csvToList("/content/drive/My Drive/MusicXML/QK465.csv")
+QK590 = csvToList("/content/drive/My Drive/MusicXML/QK590.csv")
+QOp18No4 = csvToList("/content/drive/My Drive/MusicXML/QOp18No4.csv")
+QOp130 = csvToList("/content/drive/My Drive/MusicXML/QOp130.csv")
+QOp131 = csvToList("/content/drive/My Drive/MusicXML/QOp131.csv")
 
 
-pieces = [K189, K457, K331, K545, K279, K570, K576, K310, Op10No1, Op49No2, Op13, Op2No1, Op2No3, Op81a, Op78, Op31No1, D959, D960]
-MozBeethSchub = Compiler(pieces)
+pieces = [K189, K457, K331, K545, K279, K570, K576, K310, Op10No1, 
+          Op49No2, Op13, Op2No1, Op2No3, Op81a, Op78, Op31No1, D959, 
+          D960, D748, BraOp1, COp36, COp40No1, FCOp35, HobXVI23, HobXVI27, 
+          HobXVI34, HobXVI52, QK387, QK421, QK428, QK458, QK464, QK465, 
+          QK590, QOp18No4, QOp130, QOp131]
+comp1 = Compiler(pieces)
 
-formattedData = [np.array(phrase).reshape(-1, 1) for phrase in MozBeethSchub.processedPhrases]
+formattedData = [np.array(phrase).reshape(-1, 1) for phrase in comp1.processedPhrases]
 
-n_states = 8 #reminder - play around with setting if not working
-model = hmm.GaussianHMM(n_components=n_states, covariance_type="full", n_iter=100)
+n_states = 4 #reminder - play around with setting if not working
+model = hmm.GaussianHMM(n_components=n_states, covariance_type="full", n_iter=500)
 model.fit(np.vstack(formattedData))
 
-def generate(model, length=16):
+def generate(model, length=26):
 
     generated, _ = model.sample(length)
     rhythm = generated.flatten().tolist()
@@ -100,4 +123,4 @@ def generate(model, length=16):
     print(["{:.4f}".format(val) for val in rhythm])
     return rhythm
 
-rhythmGen = generate(model, length=25)
+rhythmGen = generate(model, length=36)
