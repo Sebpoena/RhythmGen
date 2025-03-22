@@ -1,3 +1,4 @@
+#this the real shit
 !pip install hmmlearn
 from google.colab import drive
 import csv
@@ -29,11 +30,18 @@ class Compiler:
     x = sum([len(i) for i in self.rawPhrases])
     print(x)
     self.preProcessedPhrases = []
+    self.durations = [0.5, 1.0, 0.25, 0.75, 0.125, 
+                      2.0, 3.0, 0.3333, 1.5, 4.0, 0.375, 
+                      0.1667, 0.0625, 0.0833, 0.1875, 
+                      0.875, 0.6667, 1.75, 3.5, 3.75]
     for i in self.rawPhrases:
       self.splitLongPhrases(i)
     print(f"the length of the preprocessed phrases is {len(self.preProcessedPhrases)}")
     self.processedPhrases = [i for i in self.preProcessedPhrases if not self.sortRepetitivePhrases(i)]
     print(f"the length of the processed phrases is {len(self.processedPhrases)}")
+    self.durToIndex = {dur: i for i, dur in enumerate(self.durations)}
+    self.indexToDur = {i: dur for dur, i in self.durToIndex.items()}
+    self.encodedPhrases = [self.encodePhrase(i) for i in self.processedPhrases]
 
   def splitLongPhrases(self, phrases, maxLength=36, overlap=24):
     """this will separate longer phrases into shorter overlapping chunks"""
@@ -52,15 +60,26 @@ class Compiler:
         count += 1
     print(f"the length of the phrases after separation is {count}")
 
-  def sortRepetitivePhrases(self, phrase, threshold=0.92):
+  def sortRepetitivePhrases(self, phrase, threshold=1):
     """this will return True if a phrase is largely comprised of one duration"""
+    """it will also safeguard against the unexpected durations or rounding errors"""
     if len(phrase) <= 5:
       return False
     durationCount = {}
     for duration in phrase:
       durationCount[duration] = durationCount.get(duration, 0) + 1
+      if duration not in self.durations:
+        self.durations.append(duration)
     percentage = max(durationCount.values())/len(phrase)
     return percentage > threshold
+
+  def encodePhrase(self, phrase):
+    for i in phrase:
+      if i in self.durations:
+        continue
+      else:
+        print('error')
+    return [self.durToIndex[dur] for dur in phrase]
 
 
 K189 = csvToList('/content/drive/MyDrive/MusicXML/K189.csv')
@@ -100,27 +119,36 @@ QK590 = csvToList("/content/drive/My Drive/MusicXML/QK590.csv")
 QOp18No4 = csvToList("/content/drive/My Drive/MusicXML/QOp18No4.csv")
 QOp130 = csvToList("/content/drive/My Drive/MusicXML/QOp130.csv")
 QOp131 = csvToList("/content/drive/My Drive/MusicXML/QOp131.csv")
-
+QOp18No1 = csvToList("/content/drive/My Drive/MusicXML/QOp18No1.csv")
+QOp18No2 = csvToList("/content/drive/My Drive/MusicXML/QOp18No2.csv")
+QOp18No5 = csvToList("/content/drive/My Drive/MusicXML/QOp18No5.csv")
+QOp74 = csvToList("/content/drive/My Drive/MusicXML/QOp74.csv")
+QOp95 = csvToList("/content/drive/My Drive/MusicXML/QOp95.csv")
+QOp127 = csvToList("/content/drive/My Drive/MusicXML/QOp127.csv")
+QOp132 = csvToList("/content/drive/My Drive/MusicXML/QOp132.csv")
 
 pieces = [K189, K457, K331, K545, K279, K570, K576, K310, Op10No1, 
           Op49No2, Op13, Op2No1, Op2No3, Op81a, Op78, Op31No1, D959, 
           D960, D748, BraOp1, COp36, COp40No1, FCOp35, HobXVI23, HobXVI27, 
           HobXVI34, HobXVI52, QK387, QK421, QK428, QK458, QK464, QK465, 
-          QK590, QOp18No4, QOp130, QOp131]
+          QK590, QOp18No4, QOp130, QOp131, QOp18No1, QOp18No2, QOp18No5,
+          QOp74, QOp95, QOp127, QOp132]
 comp1 = Compiler(pieces)
 
-formattedData = [np.array(phrase).reshape(-1, 1) for phrase in comp1.processedPhrases]
+formattedData = [np.array(phrase).reshape(-1, 1) for phrase in comp1.encodedPhrases]
 
-n_states = 4 #reminder - play around with setting if not working
-model = hmm.GaussianHMM(n_components=n_states, covariance_type="full", n_iter=500)
+n_states = 6 #reminder - play around with setting if not working
+model = hmm.GaussianHMM(n_components=n_states, covariance_type="full", n_iter=100, tol=1e-4)
 model.fit(np.vstack(formattedData))
 
-def generate(model, length=26):
+def snapToNearestToken(value, tokens):
+  return min(tokens, key=lambda token: abs(token - value))
 
-    generated, _ = model.sample(length)
-    rhythm = generated.flatten().tolist()
+def generate(model, length=16):
+  generated, _ = model.sample(length)
+  rhythm = generated.flatten().tolist()
+  print([val for val in rhythm])
+  return [comp1.indexToDur[snapToNearestToken(i, comp1.indexToDur)] for i in rhythm]
 
-    print(["{:.4f}".format(val) for val in rhythm])
-    return rhythm
-
-rhythmGen = generate(model, length=36)
+rhythmGen = generate(model, length=25)
+print(rhythmGen)
