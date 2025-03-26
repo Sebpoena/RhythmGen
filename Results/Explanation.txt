@@ -1,0 +1,6 @@
+naming scheme for results:
+there are a few variables mentioned in the name of the results:
+- the number of n_states
+- the number of n_iter
+- the tol
+- the length of phrase x the amount of phrases generated
