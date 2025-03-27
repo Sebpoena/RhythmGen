@@ -3,25 +3,6 @@ import music21
 import csv
 import pandas as pd
 drive.mount('/content/drive')
-"""
-K279 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K279_2.mxl') #works - done
-K545 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K545_2.mxl') #works - done
-K457 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K457_1.mxl') #works - done
-K189 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K189_1.mxl') #works badly - done
-K331 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K331_1.mxl') #works - done
-K570 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K570_1.mxl') #works - done
-K576 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K576_1.mxl') #works - done
-K310 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K310_1.mxl') #works badly, part[1] not [0] - done
-
-Op10No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op10No1_1.mxl') #works - done
-Op49No2 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op49No2_1.mxl') #works, 1st mvmt only - done
-Op13 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op13_1.mxl') #works - done
-Op2No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op2No1_1.mxl') #works, 1st mvmt only - done
-Op2No3 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op2No3_1.mxl') #works - done
-Op81a = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op81a_1.mxl') #works, 1st mvmt only - done
-Op78 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op78_1.mxl') #works - done
-Op31No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op31No1_1.mxl') #works, 1st mvmt only - done
-"""
 
 def getMelody(part):
   """finds the melody or first voice of a part, and flattens it into the melody list"""
@@ -32,6 +13,17 @@ def getMelody(part):
       melody.extend(voices[0].notesAndRests)
     else:
       melody.extend(bar.notesAndRests)
+  return melody
+
+def getMelodyQuartet(quartet):
+  melody = []
+  for part in quartet.parts[:3:]:
+    for bar in part.getElementsByClass('Measure'):
+      voices = bar.getElementsByClass('Voice')
+      if voices:
+        melody.extend(voices[0].notesAndRests)
+      else:
+        melody.extend(bar.notesAndRests)
   return melody
 
 def separatePhrases(melody):
@@ -79,6 +71,14 @@ def phraseOrganisation(melody, location):
   writeToFiles(location, paddedPhrases)
   return paddedPhrases
 
+def phraseOrganisationQuartet(quartet, location):
+  """provides and saves matrix to file"""
+  melody = getMelodyQuartet(quartet)
+  phraseMatrix = separatePhrases(melody)
+  paddedPhrases = padPhrases(phraseMatrix)
+  writeToFiles(location, paddedPhrases)
+  return paddedPhrases
+
 def inspectPhrases(phraseMatrix):
   """a short function for inspecting the output before writing to a csv"""
   for i in phraseMatrix:
@@ -91,26 +91,23 @@ def inspectPhrasesLength(phraseMatrix):
 def checkCSV(location):
   df = pd.read_csv(location, header=None)
   print(df.head())
-
-K279 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K279_2.mxl') 
-K545 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K545_2.mxl') 
-K457 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K457_1.mxl') 
-K189 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K189_1.mxl') 
-K331 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K331_1.mxl') 
-K570 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K570_1.mxl') 
-K576 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K576_1.mxl') 
+"""
+K279 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K279_2.mxl')
+K545 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K545_2.mxl')
+K457 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K457_1.mxl')
+K189 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K189_1.mxl')
+K331 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K331_1.mxl')
+K570 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K570_1.mxl')
+K576 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K576_1.mxl')
 K310 = music21.converter.parse('/content/drive/MyDrive/MusicXML/K310_1.mxl')
-Op10No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op10No1_1.mxl') 
-Op49No2 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op49No2_1.mxl') 
-Op13 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op13_1.mxl') 
-Op2No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op2No1_1.mxl') 
-Op2No3 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op2No3_1.mxl') 
-Op81a = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op81a_1.mxl') 
-Op78 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op78_1.mxl') 
-Op31No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op31No1_1.mxl') 
-melodiesMB = [K189.parts[0], K457.parts[0], K331.parts[0], K545.parts[0], K279.parts[0], K570.parts[0], K576.parts[0], K310.parts[1], Op10No1.parts[0], Op49No2.parts[0], Op13.parts[0], Op2No1.parts[0], Op2No3.parts[0], Op81a.parts[0], Op78.parts[0], Op31No1.parts[0]]
-#MB stands for Mozart-Beethoven, as I will now be adding other composers to the data
-
+Op10No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op10No1_1.mxl')
+Op49No2 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op49No2_1.mxl')
+Op13 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op13_1.mxl')
+Op2No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op2No1_1.mxl')
+Op2No3 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op2No3_1.mxl')
+Op81a = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op81a_1.mxl')
+Op78 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op78_1.mxl')
+Op31No1 = music21.converter.parse('/content/drive/MyDrive/MusicXML/Op31No1_1.mxl')
 K189Path = "/content/drive/My Drive/MusicXML/K189.csv"
 K457Path = "/content/drive/My Drive/MusicXML/K457.csv"
 K331Path = "/content/drive/My Drive/MusicXML/K331.csv"
@@ -127,18 +124,150 @@ Op2No3Path = "/content/drive/My Drive/MusicXML/Op2No3.csv"
 Op81aPath = "/content/drive/My Drive/MusicXML/Op81a.csv"
 Op78Path = "/content/drive/My Drive/MusicXML/Op78.csv"
 Op31No1Path = "/content/drive/My Drive/MusicXML/Op31No1.csv"
+
+D748 = music21.converter.parse("/content/drive/My Drive/MusicXML/D748_1.mxl")
+D959 = music21.converter.parse("/content/drive/My Drive/MusicXML/D959_1.mxl")
+D960 = music21.converter.parse("/content/drive/My Drive/MusicXML/D960_1.mxl")
+D748Path = "/content/drive/My Drive/MusicXML/D748.csv"
+D959Path = "/content/drive/My Drive/MusicXML/D959.csv"
+D960Path = "/content/drive/My Drive/MusicXML/D960.csv"
+
+BraOp1 = music21.converter.parse("/content/drive/My Drive/MusicXML/BraOp1_1.mxl")
+COp36 = music21.converter.parse("/content/drive/My Drive/MusicXML/COp36_1.mxl")
+COp40No1 = music21.converter.parse("/content/drive/My Drive/MusicXML/COp40No1_1.mxl")
+FCOp35 = music21.converter.parse("/content/drive/My Drive/MusicXML/FCOp35_1.mxl")
+HobXVI23 = music21.converter.parse("/content/drive/My Drive/MusicXML/HobXVI23_1.mxl")
+HobXVI27 = music21.converter.parse("/content/drive/My Drive/MusicXML/HobXVI27_1.mxl")
+HobXVI34 = music21.converter.parse("/content/drive/My Drive/MusicXML/HobXVI34_1.mxl")
+HobXVI52 = music21.converter.parse("/content/drive/My Drive/MusicXML/HobXVI52_1.mxl")
+BraOp1Path = "/content/drive/My Drive/MusicXML/BraOp1.csv"
+COp36Path = "/content/drive/My Drive/MusicXML/COp36.csv"
+COp40No1Path = "/content/drive/My Drive/MusicXML/COp40No1.csv"
+FCOp35Path = "/content/drive/My Drive/MusicXML/FCOp35.csv"
+HobXVI23Path = "/content/drive/My Drive/MusicXML/HobXVI23.csv"
+HobXVI27Path = "/content/drive/My Drive/MusicXML/HobXVI27.csv"
+HobXVI34Path = "/content/drive/My Drive/MusicXML/HobXVI34.csv"
+HobXVI52Path = "/content/drive/My Drive/MusicXML/HobXVI52.csv"
+
+QK387 = music21.converter.parse("/content/drive/My Drive/MusicXML/QK387_1.mxl")
+QK421 = music21.converter.parse("/content/drive/My Drive/MusicXML/QK421_1.mxl")
+QK428 = music21.converter.parse("/content/drive/My Drive/MusicXML/QK428_1.mxl")
+QK458 = music21.converter.parse("/content/drive/My Drive/MusicXML/QK458_1.mxl")
+QK464 = music21.converter.parse("/content/drive/My Drive/MusicXML/QK464_1.mxl")
+QK465 = music21.converter.parse("/content/drive/My Drive/MusicXML/QK465_1.mxl")
+QK590 = music21.converter.parse("/content/drive/My Drive/MusicXML/QK590_1.mxl")
+QOp18No4 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp18No4_1.mxl")
+QOp130 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp130_1.mxl")
+QOp131 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp131_1.mxl")
+QK387Path = "/content/drive/My Drive/MusicXML/QK387.csv"
+QK421Path = "/content/drive/My Drive/MusicXML/QK421.csv"
+QK428Path = "/content/drive/My Drive/MusicXML/QK428.csv"
+QK458Path = "/content/drive/My Drive/MusicXML/QK458.csv"
+QK464Path = "/content/drive/My Drive/MusicXML/QK464.csv"
+QK465Path = "/content/drive/My Drive/MusicXML/QK465.csv"
+QK590Path = "/content/drive/My Drive/MusicXML/QK590.csv"
+QOp18No4Path = "/content/drive/My Drive/MusicXML/QOp18No4.csv"
+QOp130Path = "/content/drive/My Drive/MusicXML/QOp130.csv"
+QOp131Path = "/content/drive/My Drive/MusicXML/QOp131.csv"
+
+QOp18No1 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp18No1_1.mxl")
+QOp18No2 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp18No2_1.mxl")
+QOp18No5 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp18No5_1.mxl")
+QOp74 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp74_1.mxl")
+QOp95 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp95_1.mxl")
+QOp127 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp127_1.mxl")
+QOp132 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp132_1.mxl")
+QOp18No1Path = "/content/drive/My Drive/MusicXML/QOp18No1.csv"
+QOp18No2Path = "/content/drive/My Drive/MusicXML/QOp18No2.csv"
+QOp18No5Path = "/content/drive/My Drive/MusicXML/QOp18No5.csv"
+QOp74Path = "/content/drive/My Drive/MusicXML/QOp74.csv"
+QOp95Path = "/content/drive/My Drive/MusicXML/QOp95.csv"
+QOp127Path = "/content/drive/My Drive/MusicXML/QOp127.csv"
+QOp132Path = "/content/drive/My Drive/MusicXML/QOp132.csv"
+
+HobIII33 = music21.converter.parse("/content/drive/My Drive/MusicXML/HobIII33_1.mxl")
+HobIII34 = music21.converter.parse("/content/drive/My Drive/MusicXML/HobIII34_1.mxl")
+HobIII63 = music21.converter.parse("/content/drive/My Drive/MusicXML/HobIII63_1.mxl")
+D667 = music21.converter.parse("/content/drive/My Drive/MusicXML/D667_1.mxl")
+D810 = music21.converter.parse("/content/drive/My Drive/MusicXML/D810_1.mxl")
+HobIII33Path = "/content/drive/My Drive/MusicXML/HobIII33.csv"
+HobIII34Path = "/content/drive/My Drive/MusicXML/HobIII34.csv"
+HobIII63Path = "/content/drive/My Drive/MusicXML/HobIII63.csv"
+D667Path = "/content/drive/My Drive/MusicXML/D667.csv"
+D810Path = "/content/drive/My Drive/MusicXML/D810.csv"
+
+QMenOp12 = music21.converter.parse("/content/drive/My Drive/MusicXML/QMenOp12_1.mxl")
+QMenOp13 = music21.converter.parse("/content/drive/My Drive/MusicXML/QMenOp13_1.mxl")
+QMenOp44No2 = music21.converter.parse("/content/drive/My Drive/MusicXML/QMenOp44No2_1.mxl")
+QMenOp80 = music21.converter.parse("/content/drive/My Drive/MusicXML/QMenOp80_1.mxl")
+QBocOp39 = music21.converter.parse("/content/drive/My Drive/MusicXML/QBocOp39_1.mxl")
+QDvoOp96 = music21.converter.parse("/content/drive/My Drive/MusicXML/QDvoOp96_1.mxl")
+QOp59No1 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp59No1_1.mxl")
+QOp59No2 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp59No2_1.mxl")
+QOp59No3 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp59No3_1.mxl")
+QOp18No3 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp18No3_1.mxl")
+QOp18No6 = music21.converter.parse("/content/drive/My Drive/MusicXML/QOp18No6_1.mxl")
+QBraOp51No1 = music21.converter.parse("/content/drive/My Drive/MusicXML/QBraOp51No1_1.mxl")
+QBraOp51No2 = music21.converter.parse("/content/drive/My Drive/MusicXML/QBraOp51No2_1.mxl")
+QMenOp12Path = "/content/drive/My Drive/MusicXML/QMenOp12.csv"
+QMenOp13Path = "/content/drive/My Drive/MusicXML/QMenOp13.csv"
+QMenOp44No2Path = "/content/drive/My Drive/MusicXML/QMenOp44No2.csv"
+QMenOp80Path = "/content/drive/My Drive/MusicXML/QMenOp80.csv"
+QBocOp39Path = "/content/drive/My Drive/MusicXML/QBocOp39.csv"
+QDvoOp96Path = "/content/drive/My Drive/MusicXML/QDvoOp96.csv"
+QOp59No1Path = "/content/drive/My Drive/MusicXML/QOp59No1.csv"
+QOp59No2Path = "/content/drive/My Drive/MusicXML/QOp59No2.csv"
+QOp59No3Path = "/content/drive/My Drive/MusicXML/QOp59No3.csv"
+QOp18No3Path = "/content/drive/My Drive/MusicXML/QOp18No3.csv"
+QOp18No6Path = "/content/drive/My Drive/MusicXML/QOp18No6.csv"
+QBraOp51No1Path = "/content/drive/My Drive/MusicXML/QBraOp51No1.csv"
+QBraOp51No2Path = "/content/drive/My Drive/MusicXML/QBraOp51No2.csv"
+
+
+melodiesMB = [K189.parts[0], K457.parts[0], K331.parts[0], K545.parts[0], K279.parts[0], K570.parts[0], K576.parts[0], K310.parts[1], Op10No1.parts[0], Op49No2.parts[0], Op13.parts[0], Op2No1.parts[0], Op2No3.parts[0], Op81a.parts[0], Op78.parts[0], Op31No1.parts[0]]
 pathsMB = [K189Path, K457Path, K331Path, K545Path, K279Path, K570Path, K576Path, K310Path, Op10No1Path, Op49No2Path, Op13Path, Op2No1Path, Op2No3Path, Op81aPath, Op78Path, Op31No1Path]
 #MB stands for Mozart-Beethoven, as I will now be adding other composers to the data
 
-D959 = music21.converter.parse("/content/drive/My Drive/MusicXML/D959_1.mxl")
-D960 = music21.converter.parse("/content/drive/My Drive/MusicXML/D960_1.mxl")
-melodiesSchubert = [D959.parts[0], D960.parts[0]]
+melodiesSchubert = [D959.parts[0], D960.parts[0], D748.parts[0]]
+pathsSchubert = [D959Path, D960Path, D748Path]
 
-D959Path = "/content/drive/My Drive/MusicXML/D959.csv"
-D960Path = "/content/drive/My Drive/MusicXML/D960.csv"
-pathsSchubert = [D959Path, D960Path]
+melodiesOther = [BraOp1.parts[0], COp36.parts[0], COp40No1.parts[0], FCOp35.parts[0], HobXVI23.parts[0], HobXVI27.parts[0], HobXVI34.parts[0], HobXVI52.parts[0]]
+pathsOther = [BraOp1Path, COp36Path, COp40No1Path, FCOp35Path, HobXVI23Path, HobXVI27Path, HobXVI34Path, HobXVI52Path]
 
-for melody, location in zip(melodiesSchubert, pathsSchubert):
-  phraseMatrix = phraseOrganisation(melody, location)
+quartets = [QK387, QK421, QK428, QK458, QK464, QK465, QK590, QOp18No4, QOp130, QOp131]
+pathsQuartet = [QK387Path, QK421Path, QK428Path, QK458Path, QK464Path, QK465Path, QK590Path, QOp18No4Path, QOp130Path, QOp131Path]
+
+quartetsOther = [QOp18No1, QOp18No2, QOp18No5, QOp74, QOp95, QOp127, QOp132]
+quartetPathsOther = [QOp18No1Path, QOp18No2Path, QOp18No5Path, QOp74Path, QOp95Path, QOp127Path, QOp132Path]
+
+melodiesHaySchu = [HobIII33, HobIII34, HobIII63, D667, D810]
+pathsHaySchu = [HobIII33Path, HobIII34Path, HobIII63Path, D667Path, D810Path]
+
+quartetsFinal = [QMenOp12, QMenOp13, QMenOp44No2, QMenOp80, QBocOp39, QDvoOp96,
+                 QOp59No1, QOp59No2, QOp59No3, QOp18No3, QOp18No6, QBraOp51No1, QBraOp51No2]
+pathsFinal = [QMenOp12Path, QMenOp13Path, QMenOp44No2Path, QMenOp80Path, QBocOp39Path, QDvoOp96Path,
+              QOp59No1Path, QOp59No2Path, QOp59No3Path, QOp18No3Path, QOp18No6Path, QBraOp51No1Path,
+              QBraOp51No2Path]
+"""
+
+"""
+#code for writing quartets to csv files and reporting the length and first five rows
+for piece, location in zip(quartetMelodies, quartetPaths):
+  phraseMatrix = phraseOrganisationQuartet(piece, location)
   inspectPhrasesLength(phraseMatrix)
   checkCSV(location)
+
+#code for writing non-quartets to csv files and reporting the length and first five rows
+for piece, location in zip(melodies, paths):
+  phraseMatrix = phraseOrganisation(piece, location)
+  inspectPhrasesLength(phraseMatrix)
+  checkCSV(location)
+
+#code for checking the newly converted pieces before writing them to a csv
+for piece in ...:
+  for part in piece.parts:
+    x = separatePhrases(getMelody(part))
+    print(len(x))
+    for i in x:
+      print(i)
+"""
