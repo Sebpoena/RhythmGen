@@ -5,6 +5,7 @@ import csv
 import numpy as np
 import pandas as pd
 from hmmlearn import hmm
+import joblib
 
 drive.mount('/content/drive')
 
@@ -160,7 +161,7 @@ comp1 = Compiler(pieces)
 formattedData = [np.array(phrase).reshape(-1, 1) for phrase in comp1.encodedPhrases]
 
 n_states = 15 #reminder - play around with setting if not working
-model = hmm.GaussianHMM(n_components=n_states, covariance_type="full", n_iter=300)
+model = hmm.GaussianHMM(n_components=n_states, covariance_type="full", n_iter=250)
 model.fit(np.vstack(formattedData))
 
 def snapToNearestToken(value, tokens):
@@ -183,7 +184,11 @@ def listGeneratedRhythms(lengthList, lengthPhrases = 32):
 
 rhythms = listGeneratedRhythms(50)
 
-filePath = "/content/drive/My Drive/MusicXML/Results15_300_1e-2_7x50.csv"
+modelPath = "/content/drive/My Drive/MusicXML/m2.pkl"
+
+joblib.dump(model, modelPath)
+
+filePath = "/content/drive/My Drive/MusicXML/Results15_250_1e-2_32x50.csv"
 
 with open(filePath, mode="w", newline="") as file:
     writer = csv.writer(file)
