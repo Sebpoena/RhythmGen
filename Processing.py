@@ -171,7 +171,7 @@ def generate(model, length=16):
   generated, _ = model.sample(length)
   rhythm = generated.flatten().tolist()
   print([val for val in rhythm])
-  return [comp1.indexToDur[snapToNearestToken(i, comp1.durToIndex)] for i in rhythm]
+  return [comp1.indexToDur[snapToNearestToken(i, comp1.indexToDur)] for i in rhythm]
 
 #rhythmGen = generate(model, length=20)
 
