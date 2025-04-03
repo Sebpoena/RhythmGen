@@ -1,7 +1,9 @@
 !pip install hmmlearn
 from hmmlearn import hmm
 from google.colab import drive
+import csv
 import numpy as np
+import pandas as pd
 import joblib
 
 drive.mount('/content/drive')
@@ -63,7 +65,6 @@ def continuePhrase(model, prompt, nSteps):
   lastState = states[-1]
   generated = prompt.flatten().tolist()
   for _ in range(nSteps):
-    # Sample the next state based on transition probabilities
     nextStateProbs = model.transmat_[lastState]
     nextState = np.random.choice(len(nextStateProbs), p=nextStateProbs)
     newObs = model.means_[nextState][0]
@@ -72,6 +73,32 @@ def continuePhrase(model, prompt, nSteps):
     lastState = nextState
   return generated
 
+def singlePromptTest(model, prompt, nSteps, nPhrases = 100):
+  formatted = np.array(encodeDecode(prompt, durToIndex)).reshape(-1, 1)
+  output = []
+  for i in range(nSteps):
+    phrase = encodeDecode(continuePhrase(model, formatted, nSteps), indexToDur)
+    output.append(phrase)
+  return output
+
+prompt = [0.5, 2.0, 0.5, 0.5, 0.5, 0.5, 1.5, 0.5]
+
+test = singlePromptTest(model, prompt, 15)
+
+filePath = "/content/drive/My Drive/MusicXML/Test100_Same15.csv"
+
+with open(filePath, mode="w", newline="") as file:
+    writer = csv.writer(file)
+    writer.writerows(test)
+
+def checkCSV(location):
+  df = pd.read_csv(location, header=None)
+  print(df.head())
+
+checkCSV(filePath)
+
+
+"""
 phrase = [0.5, 2.0, 0.125, 0.125, 0.125, 0.125, 0.5, 1.0]
 tokenised = encodeDecode(phrase, durToIndex)
 reshaped = np.array(tokenised).reshape(-1, 1)
@@ -80,7 +107,6 @@ promptList = continuePhrase(model, reshaped, 12)
 decoded = encodeDecode(promptList, indexToDur)
 print(decoded)
 
-"""
 genList = listGeneratedRhythms(15)
 print(genList)
 """
