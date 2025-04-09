@@ -1,6 +1,7 @@
 #code for generating phrases of different lengths with natural endings
 !pip install hmmlearn
 from google.colab import drive
+import random
 import csv
 import numpy as np
 from hmmlearn import hmm
@@ -40,7 +41,7 @@ def generate(model, length=16):
   """will generate phrases of a specified length with a specified model"""
   generated, _ = model.sample(length)
   rhythm = generated.flatten().tolist()
-  print([val for val in rhythm])
+  #print([val for val in rhythm])
   return [indexToDur[snapToNearestToken(i, indexToDur)] for i in rhythm]
 
 def encodeDecode(phrase, encoder):
@@ -72,9 +73,10 @@ def naturalEndPrompted(model, prompt, minLength, dict):
     snapped = snapToNearestToken(newObs, indexToDur)
     generated.append(snapped)
     lastState = nextState
-    if len(generated) >= minLength and lastState == decideEnding(dict):
+    if len(generated) >= minLength and int(lastState) == decideEnding(dict):
+      print(int(lastState))
       switch = False
-  return generated
+  return encodeDecode(generated, indexToDur)
 
 def naturalEndUnprompted(model, minLength, dict):
   """will generate natural phrase without a prompt"""
@@ -91,7 +93,42 @@ def naturalEndUnprompted(model, minLength, dict):
     snapped = snapToNearestToken(newObs, indexToDur)
     generated.append(snapped)
     lastState = nextState
-    if lastState == decideEnding(dict):
+    if int(lastState) == decideEnding(dict):
+      print(int(lastState))
       switch = False
-  return generated
+  return encodeDecode(generated, indexToDur)
 
+print(decideEnding(s))
+print(decideEnding(m))
+print(decideEnding(l))
+unprompted = []
+prompted = []
+unpromptedPath = '/content/drive/My Drive/MusicXML/unprompted.csv'
+promptedPath = '/content/drive/My Drive/MusicXML/prompted.csv'
+prompt = [1.5, 0.5, 1.5, 0.5, 1.0, 2.0]
+
+for i in range(20):
+  unprompted.append(naturalEndUnprompted(model, 4, s))
+unprompted.append([0, 0, 0, 0, 0])
+for i in range(20):
+  unprompted.append(naturalEndUnprompted(model, 12, m))
+unprompted.append([0, 0, 0, 0, 0])
+for i in range(20):
+  unprompted.append(naturalEndUnprompted(model, 19, l))
+
+for i in range(20):
+  prompted.append(naturalEndPrompted(model, prompt, 4, s))
+prompted.append([0, 0, 0, 0, 0])
+for i in range(20):
+  prompted.append(naturalEndPrompted(model, prompt, 12, m))
+prompted.append([0, 0, 0, 0, 0])
+for i in range(20):
+  prompted.append(naturalEndPrompted(model, prompt, 19, l))
+
+with open(unpromptedPath, mode="w", newline="") as file:
+    writer = csv.writer(file)
+    writer.writerows(unprompted)
+
+with open(promptedPath, mode="w", newline="") as file:
+    writer = csv.writer(file)
+    writer.writerows(prompted)
