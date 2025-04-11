@@ -1,0 +1,4 @@
+these files will serve as the training data for multinomial HMM. It should be a bit easier to train,
+which is why I am also training on barlines and rests, but it only takes input of equal lengths, so 
+I have had to re-analyse the pieces. The length of the notes is formatted in the same way, but the 
+rests are formatted as negative numbers, and barlines represented by the string 'B'.
