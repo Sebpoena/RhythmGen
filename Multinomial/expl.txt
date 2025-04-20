@@ -1,0 +1,3 @@
+trying to use multinomial, because they are more simple and should hopefully cope better with more tokens.
+On top of this, if the goal is to eventually export them to json files, it should work better with a more
+simple model like this. However, it is proving annoying, and not giving the results I want, or expect.
