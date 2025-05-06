@@ -1,0 +1,248 @@
+#combining generation and cleaning
+#making generation more accessible, with toggles for prompt or no prompt
+"""
+in this file I hope to combine all the necessary tools to generate adequate rhythm.
+the first step in this process is the dependencies, the libraries necessary for it's
+function, mounting it to the google drive, and defining which models we can use.
+"""
+
+!pip install hmmlearn
+from hmmlearn import hmm
+from google.colab import drive
+import csv
+import numpy as np
+import pandas as pd
+import joblib
+
+drive.mount('/content/drive')
+models = ['g_m1_s16_iter10', 'g_m1_s24_iter20', 'g_m1_s32_iter30',
+          'g_m1_s40_iter40', 'g_m2_s30_iter50', 'g_m2_s36_iter60',
+          'g_m2_s42_iter70']
+usePath = '/content/drive/My Drive/MusicXML/g_m2_s42_iter70.pkl'
+useModel = joblib.load(usePath)
+
+"""
+next up, the basic functions for generation, including encoding and decoding the
+HMM output. This includes the duration lists and encoding dictionaries, which are
+specific to the training data used and the models specified.
+"""
+
+#all durations in the data
+durations = [0.5, 1.0, 0.25, 0.75, 0.125, 2.0, 3.0, 0.3333, 1.5, 4.0,
+             0.375, 0.1667, 0.0625, 0.0833, 0.1875, 0.875, 0.6667, 1.75,
+             3.5, 3.75, -0.5, -0.375, -0.125, -0.25, -1.0, -0.75, -2.0,
+             -4.0, -0.3333, -1.5, -2.5, -0.1875, -0.0625, -3.0, 0.2, 0.3,
+             -0.0417, 0.0417, 0.0354, 0.025, -0.1667, 0.0312, 0.0208, 0.0271,
+             0.4, 0.05, 0.4292, -0.0042, 0.0563, 0.0708, -0.6667, 0.1, -6.0,
+             -9.0, -4.5, -0.0021, -0.875, 6.0, -0.0312, 0.0938, -2.25, -0.0833, 1.3333]
+#encoding and decoding dictionaries
+indexToDur = {0: 0.5, 1: 1.0, 2: 0.25, 3: 0.75, 4: 0.125, 5: 2.0, 6: 3.0,
+              7: 0.3333, 8: 1.5, 9: 4.0, 10: 0.375, 11: 0.1667, 12: 0.0625,
+              13: 0.0833, 14: 0.1875, 15: 0.875, 16: 0.6667, 17: 1.75, 18: 3.5,
+              19: 3.75, 20: -0.5, 21: -0.375, 22: -0.125, 23: -0.25, 24: -1.0,
+              25: -0.75, 26: -2.0, 27: -4.0, 28: -0.3333, 29: -1.5, 30: -2.5,
+              31: -0.1875, 32: -0.0625, 33: -3.0, 34: 0.2, 35: 0.3, 36: -0.0417,
+              37: 0.0417, 38: 0.0354, 39: 0.025, 40: -0.1667, 41: 0.0312, 42: 0.0208,
+              43: 0.0271, 44: 0.4, 45: 0.05, 46: 0.4292, 47: -0.0042, 48: 0.0563,
+              49: 0.0708, 50: -0.6667, 51: 0.1, 52: -6.0, 53: -9.0, 54: -4.5,
+              55: -0.0021, 56: -0.875, 57: 6.0, 58: -0.0312, 59: 0.0938, 60: -2.25,
+              61: -0.0833, 62: 1.3333}
+durToIndex = {0.5: 0, 1.0: 1, 0.25: 2, 0.75: 3, 0.125: 4, 2.0: 5, 3.0: 6, 0.3333: 7,
+              1.5: 8, 4.0: 9, 0.375: 10, 0.1667: 11, 0.0625: 12, 0.0833: 13, 0.1875: 14,
+              0.875: 15, 0.6667: 16, 1.75: 17, 3.5: 18, 3.75: 19, -0.5: 20, -0.375: 21,
+              -0.125: 22, -0.25: 23, -1.0: 24, -0.75: 25, -2.0: 26, -4.0: 27, -0.3333: 28,
+              -1.5: 29, -2.5: 30, -0.1875: 31, -0.0625: 32, -3.0: 33, 0.2: 34, 0.3: 35,
+              -0.0417: 36, 0.0417: 37, 0.0354: 38, 0.025: 39, -0.1667: 40, 0.0312: 41,
+              0.0208: 42, 0.0271: 43, 0.4: 44, 0.05: 45, 0.4292: 46, -0.0042: 47, 0.0563: 48,
+              0.0708: 49, -0.6667: 50, 0.1: 51, -6.0: 52, -9.0: 53, -4.5: 54, -0.0021: 55,
+              -0.875: 56, 6.0: 57, -0.0312: 58, 0.0938: 59, -2.25: 60, -0.0833: 61, 1.3333: 62}
+
+def snapToNearestToken(value, tokens):
+  """finds the nearest real token to the model output"""
+  return min(tokens, key=lambda token: abs(token - value))
+
+def generate(model, length=16):
+  """will generate phrases of a specified length with a specified model"""
+  generated, _ = model.sample(length)
+  rhythm = generated.flatten().tolist()
+  return [indexToDur[snapToNearestToken(i, indexToDur)] for i in rhythm]
+
+def listGeneratedRhythms(model, lengthList, lengthPhrases = 32):
+  """will generate a specified amount of phrases of a specified length"""
+  newGeneratedRhythms = []
+  for i in range(lengthList):
+    x = generate(model, lengthPhrases)
+    newGeneratedRhythms.append(x)
+  return newGeneratedRhythms
+
+def encodeDecode(phrase, encoder):
+  """classic encoder to tokenise the data"""
+  encoded = []
+  for i in phrase:
+    if i in encoder:
+      encoded.append(encoder[i])
+    else:
+      continue
+  return encoded
+
+def continuePhrase(model, prompt, nSteps):
+  """will generate based on a prompt given"""
+  states = model.predict(prompt)
+  lastState = states[-1]
+  generated = prompt.flatten().tolist()
+  for _ in range(nSteps):
+    nextStateProbs = model.transmat_[lastState]
+    nextState = np.random.choice(len(nextStateProbs), p=nextStateProbs)
+    newObs = model.means_[nextState][0]
+    snapped = snapToNearestToken(newObs, indexToDur)
+    generated.append(snapped)
+    lastState = nextState
+  return generated
+
+def singlePromptTest(model, prompt, nSteps, nPhrases = 1):
+  """for testing multiple times on a single prompt"""
+  formatted = np.array(encodeDecode(prompt, durToIndex)).reshape(-1, 1)
+  output = []
+  for i in range(nPhrases):
+    phrase = encodeDecode(continuePhrase(model, formatted, nSteps), indexToDur)
+    output.append(phrase)
+  return output
+
+def multiPromptTest(model, prompts, nSteps):
+  """for testing on a list of multiple different prompts"""
+  outMatrix = []
+  for i in prompts:
+    formatted = np.array(encodeDecode(i, durToIndex)).reshape(-1, 1)
+    phrase = encodeDecode(continuePhrase(model, formatted, nSteps), indexToDur)
+    outMatrix.append(phrase)
+  return outMatrix
+
+"""
+the next step is to design the cleaning process for the data. To start this we have
+to define logic to handle the most problematic rhythm, the triplets. After this, we
+have to check for any non valid durations.
+"""
+
+def isValidTriplet(sumValue):
+  """will check if a summed list of triplet values adds to a valid duration"""
+  validTripletSums = [(0.125 - 0.002, 0.125 + 0.002), (0.25  - 0.002, 0.25  + 0.002),
+                      (0.5   - 0.002, 0.5   + 0.002), (1.0   - 0.002, 1.0   + 0.002),
+                      (2.0   - 0.002, 2.0   + 0.002), (4.0   - 0.002, 4.0   + 0.002)]
+  for lower, upper in validTripletSums:
+    if lower <= sumValue <= upper:
+      return True
+  return False
+
+def tripValidity(tripletList):
+  """preprocesses data for isValidTriplet() by normalising and summing the values"""
+  tempList = []
+  for i in tripletList:
+    if i < 0:
+      tempList.append(i*-1)
+    tempList.append(i)
+  return isValidTriplet(sum(tempList))
+
+def cleanTriplets(durations, keepTriplets=True):
+  """takes a list of durations and deletes non valid triplet groups"""
+  #takes: ->a phrase of floating point number durations, relative to a quarter note
+  triplets = [0.3333, 0.1667, 0.0833, 0.6667, 0.0417,
+              1.3333, -0.3333, -0.1667, -0.0833,
+              -0.6667, -0.0417, -1.3333]
+  index = 0
+  while index < len(durations):
+    if durations[index] in triplets:
+      if keepTriplets:
+        tripletList = []
+        startIndex = index
+        while index < len(durations) and durations[index] in triplets:
+          tripletList.append(durations[index])
+          index += 1
+        jump = indexJump(tripletList)
+        if tripletList:
+          del durations[startIndex + jump:startIndex + jump + len(tripletList)]
+        index = startIndex + jump
+        keepTriplets = False
+      else:
+        del durations[index]
+    else:
+      keepTriplets = True
+      index += 1
+  return durations
+
+def indexJump(tripletList):
+  """helper function of cleanTriplets() that informs when to keep or delete triplets"""
+  sumDeleted = 0
+  while True:
+    found = False
+    for windowSize in range(6, 1, -1):
+      if len(tripletList) >= windowSize:
+        window = tripletList[:windowSize]
+        if tripValidity(window):
+          sumDeleted += windowSize
+          del tripletList[:windowSize]
+          found = True
+          break
+    if not found:
+      break
+  return sumDeleted
+
+#general cleaning
+def removeInvalidDurations(durations):
+  """removes durations non in our list of valid durations"""
+  valid = [0.5, 1.0, 0.25, 0.75, 0.125, 2.0, 3.0, 0.3333, 1.5, 4.0,
+           0.375, 0.1667, 0.0625, 0.0833, 0.1875, 0.875, 0.6667, 1.75,
+           3.5, 3.75, -0.5, -0.375, -0.125, -0.25, -1.0, -0.75, -2.0,
+           -4.0, -0.3333, -1.5, -2.5, -0.1875, -0.0625, -3.0, 0.2, 0.3,
+           -0.0417, 0.0417, -0.1667, -0.6667, 0.1, -6.0, -9.0, -4.5,
+           -0.875, 6.0, -2.25, -0.0833, 1.3333]
+  cleaned = [i for i in durations if i in valid]
+  return cleaned
+
+def cleanDurations(durations):
+  """pairs the duration and triplet validation functions"""
+  clean = removeInvalidDurations(durations)
+  detriplet = cleanTriplets(clean)
+  return detriplet
+
+"""
+finally, the combination of the generation and cleaning
+"""
+def fullGen(model, nsteps, prompts = []):
+  if not prompts:
+    durations = generate(model, nsteps)
+    return cleanDurations(durations)
+  elif len(prompts) == 1:
+    print('single')
+    durations = singlePromptTest(model, prompts[0], nsteps)
+    cleaned = []
+    for i in durations:
+      cleaned.append(cleanDurations(i))
+  else:
+    print('multi')
+    durations = multiPromptTest(model, prompts, nsteps)
+    cleaned = []
+    for i in durations:
+      cleaned.append(cleanDurations(i))
+  return cleaned
+
+
+prompt = [2.0, 1.0, 1.0, 1.5, 0.25, 0.25, 1.0]
+promptMatrix = [
+    #5 from Mozart
+    [0.75, 0.25, 0.5, 1.0, 0.5],
+    [0.75, 0.25, 0.5, 1.0, 0.5, 0.75, 0.25, 0.5, 1.0, 0.5, 1.0, 0.5, 1.0, 0.5, 1.0],
+    [2.0, 0.25, 0.25, 0.25, 0.25, 0.75, 0.25, 1.0],
+    [0.75, 0.25, 0.5, 0.5],
+    [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1.0, 0.5, 1.0],
+    [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1.0, 0.5, 1.0],
+    #5 from Beethoven
+    [1.0, 1.0, 1.0, 1.0, 1.0, 1.5],
+    [1.0, 1.0, 1.0, 1.0, 1.0, 1.5, 0.1667, 0.1667, 0.1667, 1.0],
+    [2.0, 0.3334, 0.3334, 0.3334, 0.3334, 0.3334, 0.3334, 1.0],
+    [1.75, 0.25, 0.75, 0.25],
+    [1.0, 1.0, 1.0, 2.0]
+]
+
+print(fullGen(useModel, 32))
+print(fullGen(useModel, 32, [prompt]))
+print(fullGen(useModel, 32, promptMatrix,))
